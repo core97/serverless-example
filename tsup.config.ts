@@ -9,7 +9,7 @@ export default defineConfig(options => ({
   esbuildPlugins: [
     esbuildPluginTsc({ tsconfigPath: resolve(process.cwd(), 'tsconfig.json') }),
   ],
-  format: ['esm'],
+  format: ['cjs'],
   keepNames: true,
   minify: true,
   outDir: 'dist',

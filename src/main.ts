@@ -1,9 +1,11 @@
+import 'dotenv/config';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
 import { showRoutes } from 'hono/dev';
+import { handle } from 'hono/aws-lambda';
 
-export async function main() {
+function main() {
   const app = new Hono().basePath('/api');
 
   app.use('*', logger());
@@ -30,6 +32,6 @@ export async function main() {
   return app;
 }
 
-const app = await main();
+const app = main();
 
-export default app;
+export const handler = handle(app);
