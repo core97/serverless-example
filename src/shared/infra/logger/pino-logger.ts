@@ -12,16 +12,19 @@ export class PinoLogger extends LoggerService {
     super(contextService);
 
     const { NODE_ENV } = EnvVarsService.getEnvVars();
+    const isDevelopment = NODE_ENV === 'development';
 
     this.pinoLogger = pino({
       messageKey: this.MESSAGE_KEY,
+      level: 'info',
       formatters: {
         level(label) {
           return { level: label };
         },
       },
       timestamp: pino.stdTimeFunctions.isoTime,
-      ...(NODE_ENV === 'development' && {
+      // Only use pino-pretty in LOCAL development, NEVER in Lambda.
+      ...(isDevelopment && {
         transport: {
           target: 'pino-pretty',
           options: {
@@ -38,11 +41,11 @@ export class PinoLogger extends LoggerService {
   }
 
   warn<T>(obj: T, msg?: string): void {
-    this.pinoLogger.info(this.normalizeLogData(obj, msg));
+    this.pinoLogger.warn(this.normalizeLogData(obj, msg));
   }
 
   debug<T>(obj: T, msg?: string): void {
-    this.pinoLogger.info(this.normalizeLogData(obj, msg));
+    this.pinoLogger.debug(this.normalizeLogData(obj, msg));
   }
 
   error(error: unknown, msg?: string): void {

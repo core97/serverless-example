@@ -11,7 +11,8 @@ import { ContextService } from '@/shared/application/core/services/context.servi
 
 /**
  * TODO:
- * - Hacer el logger con el contexto. Ver como se están guardando esos logs en CloudWatch.
+ * - Ver como lo puedo dividir en "routers" y por cada uno tener una lambda. Para asegurarme que no
+ *   excede en tamaño la lambda.
  */
 
 // Define los tipos de las variables de entorno disponibles en Hono

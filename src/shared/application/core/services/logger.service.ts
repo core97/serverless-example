@@ -31,3 +31,17 @@ export abstract class LoggerService {
     };
   }
 }
+
+/**
+ * How to find logs in CloudWatch:
+ * - Go to CloudWatch -> Logs -> Log groups in AWS Console
+ * - You can filters logs:
+ *    + By level:
+ *        * { $.level = "info" }
+ *        * { $.level = "info" && $.request.method = "GET" }
+ *        * { $.level = "info" || $.level = "warn" }
+ *        * { $.level != "info" }
+ *   + By words included:
+ *        * { $.message = "*check*" }
+ *        * { $.request.url = "*\/api/health*" }
+ */

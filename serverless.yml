@@ -7,6 +7,15 @@ provider:
   stage: ${opt:stage, 'dev'}
   memorySize: 256
   timeout: 30
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: '*'
 
 functions:
   api:
