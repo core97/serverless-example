@@ -5,14 +5,20 @@ import { container } from '@/inversify.config';
 import { HonoApi } from '@/shared/presentation/hono-api';
 import { AuthorRouter } from '@/book/presentation/routers/author.router';
 
-function main() {
+async function createApp() {
   const honoApi = container.get<HonoApi>(HonoApi.name);
   const authorRouter = container.get<AuthorRouter>(AuthorRouter.name);
-  const authorApi = honoApi.run(authorRouter);
+  const authorApi = await honoApi.run(authorRouter);
 
   return authorApi;
 }
 
-const app = await main();
+let appPromise: ReturnType<typeof createApp> | null = null;
 
-export const handler = handle(app);
+export const handler = async (event: any, context: any) => {
+  if (!appPromise) {
+    appPromise = createApp();
+  }
+  const app = await appPromise;
+  return handle(app)(event, context);
+};

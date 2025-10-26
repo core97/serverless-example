@@ -15,7 +15,7 @@ export class HonoApi {
   run(router: HonoRouter | HonoRouter[]): Promise<Hono<HonoEnv>> {
     const routers = Array.isArray(router) ? router : [router];
 
-    const app = new Hono<HonoEnv>().basePath('/api');
+    const app = new Hono<HonoEnv>();
 
     this.initalizeContext(app);
 

@@ -18,17 +18,52 @@ provider:
           Resource: '*'
 
 functions:
-  api:
-    handler: dist/main.handler
+  # Book module handlers
+  # Generated from: src/book/presentation/api/book.api.ts -> dist/handlers/book-book.cjs
+  bookHandler:
+    handler: dist/handlers/book-book.handler
     events:
       - http:
-          path: /{proxy+}
+          path: /api/books
           method: ANY
           cors: true
       - http:
-          path: /
+          path: /api/books/{proxy+}
           method: ANY
           cors: true
+
+  # Author module handlers
+  # Generated from: src/book/presentation/api/author.api.ts -> dist/handlers/book-author.cjs
+  authorHandler:
+    handler: dist/handlers/book-author.handler
+    events:
+      - http:
+          path: /api/authors
+          method: ANY
+          cors: true
+      - http:
+          path: /api/authors/{proxy+}
+          method: ANY
+          cors: true
+
+  # Shop module handlers
+  # Generated from: src/shop/presentation/api/shop.api.ts -> dist/handlers/shop-shop.cjs
+  shopHandler:
+    handler: dist/handlers/shop-shop.handler
+    events:
+      - http:
+          path: /api/shops
+          method: ANY
+          cors: true
+      - http:
+          path: /api/shops/{proxy+}
+          method: ANY
+          cors: true
+
+  # To add a new handler:
+  # 1. Create a new file: src/<module>/presentation/api/<name>.api.ts
+  # 2. tsup will automatically compile it to: dist/handlers/<module>-<name>.cjs
+  # 3. Add a new function here with the pattern above
 
 plugins:
   - serverless-offline

@@ -5,7 +5,7 @@ import { HonoRouter, HonoEnv } from '@/shared/presentation/types/hono-api.type';
 @injectable()
 export class BookRouter extends HonoRouter {
   constructor() {
-    super({ basePath: '/books' });
+    super({ basePath: '/api/books' });
   }
 
   run(app: Hono<HonoEnv>): void {
