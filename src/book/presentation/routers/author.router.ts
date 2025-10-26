@@ -1,0 +1,23 @@
+import { Hono } from 'hono';
+import { injectable } from 'inversify';
+import { HonoRouter, HonoEnv } from '@/shared/presentation/types/hono-api.type';
+
+@injectable()
+export class AuthorRouter extends HonoRouter {
+  constructor() {
+    super({ basePath: '/authors' });
+  }
+
+  run(app: Hono<HonoEnv>): void {
+    app.get('/', async c => {
+      const authors = [
+        { name: 'Cervantes' },
+        { name: 'Gabriel Garcia Marquez' },
+        { name: 'Isabel Allende' },
+        { name: 'J.K. Rowling' },
+      ];
+
+      return c.json(authors);
+    });
+  }
+}

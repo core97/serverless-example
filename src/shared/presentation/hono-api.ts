@@ -1,0 +1,93 @@
+import { inject, injectable } from 'inversify';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { HonoRouter, HonoEnv } from '@/shared/presentation/types/hono-api.type';
+import { LoggerService } from '@/shared/application/core/services/logger.service';
+import { ContextService } from '@/shared/application/core/services/context.service';
+
+@injectable()
+export class HonoApi {
+  constructor(
+    @inject(LoggerService.name) private readonly logger: LoggerService,
+    @inject(ContextService.name) private readonly contextService: ContextService,
+  ) {}
+
+  run(router: HonoRouter | HonoRouter[]): Promise<Hono<HonoEnv>> {
+    const routers = Array.isArray(router) ? router : [router];
+
+    const app = new Hono<HonoEnv>().basePath('/api');
+
+    this.initalizeContext(app);
+
+    this.handleGlobalError(app);
+
+    this.showRequest(app);
+
+    app.use('*', cors());
+
+    this.attachRouters(routers, app);
+
+    this.showRoutes(app);
+
+    return Promise.resolve(app);
+  }
+
+  private attachRouters(routers: HonoRouter[], rootApp: Hono<HonoEnv>) {
+    const newApp = new Hono<HonoEnv>();
+    for (const router of routers) {
+      router.run(newApp);
+      rootApp.route(router.basePath, newApp);
+    }
+  }
+
+  private handleGlobalError(app: Hono<HonoEnv>) {
+    app.onError((err, c) => {
+      this.logger.error(err);
+
+      return c.json(
+        {
+          code: '000',
+          message: 'Uncontrolled unexpected error',
+          name: 'UnknownError',
+        },
+        500,
+      );
+    });
+  }
+
+  private initalizeContext(app: Hono<HonoEnv>) {
+    app.use('*', async (c, next) => {
+      const requestId = c.env.lambdaContext?.awsRequestId;
+      const traceId = requestId || this.contextService.generateTraceId();
+
+      await this.contextService.initializeStore(next, {
+        request: { method: c.req.method, url: c.req.url },
+        traceId,
+      });
+
+      c.res.headers.set(ContextService.httpHeaders.traceId, traceId);
+    });
+  }
+
+  private showRequest(app: Hono<HonoEnv>) {
+    // Middleware de logging personalizado
+    app.use('*', async (c, next) => {
+      const method = c.req.method;
+      const path = new URL(c.req.url).pathname;
+
+      this.logger.info(`-→ ${method} ${path}`);
+
+      const startTime = Date.now();
+      await next();
+      const duration = Date.now() - startTime;
+
+      this.logger.info(`←- ${method} ${path} ${duration}ms`);
+    });
+  }
+
+  private showRoutes(app: Hono<HonoEnv>): void {
+    for (const route of app.routes) {
+      this.logger.info(`${route.method}  ${route.path}`);
+    }
+  }
+}
