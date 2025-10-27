@@ -49,8 +49,11 @@ src/
 │
 ├── <module>/                        # Domain module (e.g., book, author)
 │   ├── presentation/
-│   │   ├── api/
-│   │   │   └── *.api.ts             # Lambda handler entry points
+│   │   ├── functions/               # Lambda function entry points
+│   │   │   ├── http/                # HTTP handlers (API Gateway)
+│   │   │   │   └── *.http.ts        # HTTP Lambda handlers
+│   │   │   ├── cron/                # Scheduled functions (optional)
+│   │   │   └── step/                # Step Functions (optional)
 │   │   └── routers/
 │   │       └── *.router.ts          # Route definitions (define full paths with /api prefix)
 │   └── <module>.module.ts           # DI container for module
@@ -60,16 +63,22 @@ src/
 
 ### Lambda Handlers (Entry Points)
 
-Each `*.api.ts` file in `src/*/presentation/api/` is a separate Lambda handler:
+Each `*.http.ts` file in `src/*/presentation/functions/http/` is a separate HTTP Lambda handler:
 
-- **Pattern**: `src/<module>/presentation/api/<handler>.api.ts`
+- **Pattern**: `src/<module>/presentation/functions/http/<handler>.http.ts`
 - **Examples**:
-  - `src/book/presentation/api/book.api.ts` → Book handler
-  - `src/author/presentation/api/author.api.ts` → Author handler
+  - `src/book/presentation/functions/http/book.http.ts` → Book HTTP handler
+  - `src/author/presentation/functions/http/author.http.ts` → Author HTTP handler
 
-**Handler Structure**:
+The `functions/` directory can contain subdirectories for different function types:
+- `http/` - API Gateway HTTP handlers
+- `cron/` - Scheduled functions (EventBridge)
+- `step/` - Step Functions handlers
+- Custom types as needed
 
-Handlers use the `createLambdaHandler` factory from `lambda-handler-factory.ts`:
+**HTTP Handler Structure**:
+
+HTTP handlers use the `createLambdaHandler` factory from `lambda-handler-factory.ts`:
 
 ```typescript
 import { createLambdaHandler } from '@/shared/presentation/lambda-handler-factory';
@@ -90,44 +99,45 @@ The factory:
 
 ### Build System
 
-**tsup** automatically discovers and compiles all `*.api.ts` files:
+**tsup** automatically discovers and compiles all `*.http.ts` files:
 
-- **Auto-discovery**: Uses `glob` to find all files matching `src/*/presentation/api/*.api.ts`
+- **Auto-discovery**: Uses `glob` to find all files matching `src/*/presentation/functions/http/*.http.ts`
 - **Multiple entry points**: Each handler is compiled separately
-- **Output pattern**: `dist/<module>/handlers/api/<handler>.cjs` (mirrors source structure, minified, with sourcemaps)
+- **Output pattern**: `dist/<module>/functions/http/<handler>.cjs` (mirrors source structure, minified, with sourcemaps)
 - **Examples**:
-  - `src/book/presentation/api/book.api.ts` → `dist/book/handlers/api/book.cjs`
-  - `src/author/presentation/api/author.api.ts` → `dist/author/handlers/api/author.cjs`
+  - `src/book/presentation/functions/http/book.http.ts` → `dist/book/functions/http/book.cjs`
+  - `src/author/presentation/functions/http/author.http.ts` → `dist/author/functions/http/author.cjs`
 - TypeScript paths: `@/*` → `src/*`, `lib/*` → `lib/*`
 - Format: CJS for compatibility with serverless-offline and AWS Lambda
+- Extensible: Additional globs can be added in `tsup.config.ts` for other function types (cron, step, etc.)
 
 ### Deployment
 
-- **Multiple Lambda functions**: Each `*.api.ts` file becomes a separate Lambda function
+- **Multiple Lambda functions**: Each `*.http.ts` file becomes a separate Lambda function
 - Runtime: Node.js 20.x
 - **API Gateway HTTP API (v2)**: Modern, faster, and more cost-effective than REST API
   - CORS configured globally in provider settings
   - Payload format version 2.0
   - Each handler gets its own route (e.g., `/api/books`, `/api/authors`)
 - Default stage: `dev` (override with `--stage` flag)
-- Function config: 256MB memory, 30s timeout
+- Function config: 256MB memory, 29s timeout (below API Gateway's 30s limit)
 - **AWS URLs**: Include stage prefix (e.g., `https://xxx.execute-api.eu-west-3.amazonaws.com/dev/api/books`)
   - To remove stage prefix in production, configure a Custom Domain (requires Route53 domain)
 
-**Adding a new handler**:
+**Adding a new HTTP handler**:
 1. Create your router in `src/<module>/presentation/routers/<name>.router.ts` and register it in the DI container
-2. Create file: `src/<module>/presentation/api/<name>.api.ts`:
+2. Create file: `src/<module>/presentation/functions/http/<name>.http.ts`:
    ```typescript
    import { createLambdaHandler } from '@/shared/presentation/lambda-handler-factory';
    import { YourRouter } from '@/<module>/presentation/routers/your.router';
 
    export const handler = createLambdaHandler(YourRouter.name);
    ```
-3. Run `npm run build` - tsup will automatically compile it to `dist/<module>/handlers/api/<name>.cjs`
+3. Run `npm run build` - tsup will automatically compile it to `dist/<module>/functions/http/<name>.cjs`
 4. Add function to `serverless.yml`:
    ```yaml
    <module><Name>Handler:
-     handler: dist/<module>/handlers/api/<name>.handler
+     handler: dist/<module>/functions/http/<name>.handler
      events:
        - httpApi:
            path: /api/<resource>
@@ -136,6 +146,12 @@ The factory:
            path: /api/<resource>/{proxy+}
            method: '*'
    ```
+
+**Adding other function types** (cron, step functions, etc.):
+1. Create the appropriate directory: `src/<module>/presentation/functions/<type>/`
+2. Add the handler file with appropriate extension (e.g., `.cron.ts`, `.step.ts`)
+3. Update `tsup.config.ts` to include the new glob pattern
+4. Add the corresponding function definition in `serverless.yml` with appropriate event configuration
 
 ### Dependency Injection (InversifyJS)
 

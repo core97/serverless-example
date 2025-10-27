@@ -22,7 +22,7 @@ provider:
 
 functions:
   bookHandler:
-    handler: dist/book/handlers/api/book.handler
+    handler: dist/book/functions/http/book.handler
     events:
       - httpApi:
           path: /api/books
@@ -32,7 +32,7 @@ functions:
           method: '*'
 
   authorHandler:
-    handler: dist/author/handlers/api/author.handler
+    handler: dist/author/functions/http/author.handler
     events:
       - httpApi:
           path: /api/authors
@@ -41,9 +41,9 @@ functions:
           path: /api/authors/{proxy+}
           method: '*'
 
-  # To add a new handler:
-  # 1. Create a new file: src/<module>/presentation/api/<name>.api.ts
-  # 2. tsup will automatically compile it to: dist/<module>/handlers/api/<name>.cjs
+  # To add a new HTTP handler:
+  # 1. Create a new file: src/<module>/presentation/functions/http/<name>.http.ts
+  # 2. tsup will automatically compile it to: dist/<module>/functions/http/<name>.cjs
   # 3. Add a new function here with the httpApi event pattern above
 
 plugins:

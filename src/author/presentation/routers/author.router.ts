@@ -19,5 +19,10 @@ export class AuthorRouter extends HonoRouter {
 
       return c.json(authors);
     });
+
+    app.get('/:authorId', async c => {
+      const authorId = c.req.param('authorId');
+      return c.json({ authorId });
+    });
   }
 }

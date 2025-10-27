@@ -4,14 +4,14 @@ import { resolve } from 'node:path';
 import { globSync } from 'glob';
 
 // Find all API handler files
-const apiHandlers = globSync('src/*/presentation/api/*.api.ts');
+const httpHandlers = globSync('src/*/presentation/functions/http/*.http.ts');
 
 // Create entry points object with clean names
-const entry = apiHandlers.reduce((acc, file) => {
-  const apiMatch = file.match(/src\/([^/]+)\/presentation\/api\/([^/]+)\.api\.ts/);
-  if (apiMatch) {
-    const [, module, handler] = apiMatch;
-    const entryName = `${module}/handlers/api/${handler}`;
+const entry = httpHandlers.reduce((acc, file) => {
+  const match = file.match(/src\/([^/]+)\/presentation\/functions\/http\/([^/]+)\.http\.ts/);
+  if (match) {
+    const [, module, handler] = match;
+    const entryName = `${module}/functions/http/${handler}`;
     acc[entryName] = file;
   }
   return acc;

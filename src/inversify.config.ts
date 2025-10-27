@@ -5,10 +5,13 @@ import { SharedModule } from '@/shared/shared.module';
 
 /**
  * TODO:
- * - Estrcuturar mejor los módulos lo compilado dentro de "dist",
- *   teniendo handlers de apis, jobs, step-functions, etc
- * 
  * - Añadir un cron job de ejemplo
+ * 
+ * - Conectar a una base de datos usando Prisma
+ * 
+ * - Crear un evento por EventBridge o SQS
+ * 
+ * - Crear una step function
  */
 
 export const container = new Container();
