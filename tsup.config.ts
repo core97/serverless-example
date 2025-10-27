@@ -7,12 +7,11 @@ import { globSync } from 'glob';
 const apiHandlers = globSync('src/*/presentation/api/*.api.ts');
 
 // Create entry points object with clean names
-// Example: src/book/presentation/api/book.api.ts -> handlers/book-book
 const entry = apiHandlers.reduce((acc, file) => {
-  const match = file.match(/src\/([^/]+)\/presentation\/api\/([^/]+)\.api\.ts/);
-  if (match) {
-    const [, module, handler] = match;
-    const entryName = `handlers/${module}-${handler}`;
+  const apiMatch = file.match(/src\/([^/]+)\/presentation\/api\/([^/]+)\.api\.ts/);
+  if (apiMatch) {
+    const [, module, handler] = apiMatch;
+    const entryName = `${module}/handlers/api/${handler}`;
     acc[entryName] = file;
   }
   return acc;
