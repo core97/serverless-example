@@ -94,10 +94,10 @@ The factory:
 
 - **Auto-discovery**: Uses `glob` to find all files matching `src/*/presentation/api/*.api.ts`
 - **Multiple entry points**: Each handler is compiled separately
-- **Output pattern**: `dist/handlers/<module>-<handler>.cjs` (minified, with sourcemaps)
+- **Output pattern**: `dist/<module>/handlers/api/<handler>.cjs` (mirrors source structure, minified, with sourcemaps)
 - **Examples**:
-  - `src/book/presentation/api/book.api.ts` → `dist/handlers/book-book.cjs`
-  - `src/author/presentation/api/author.api.ts` → `dist/handlers/author-author.cjs`
+  - `src/book/presentation/api/book.api.ts` → `dist/book/handlers/api/book.cjs`
+  - `src/author/presentation/api/author.api.ts` → `dist/author/handlers/api/author.cjs`
 - TypeScript paths: `@/*` → `src/*`, `lib/*` → `lib/*`
 - Format: CJS for compatibility with serverless-offline and AWS Lambda
 
@@ -123,11 +123,11 @@ The factory:
 
    export const handler = createLambdaHandler(YourRouter.name);
    ```
-3. Run `npm run build` - tsup will automatically compile it to `dist/handlers/<module>-<name>.cjs`
+3. Run `npm run build` - tsup will automatically compile it to `dist/<module>/handlers/api/<name>.cjs`
 4. Add function to `serverless.yml`:
    ```yaml
    <module><Name>Handler:
-     handler: dist/handlers/<module>-<name>.handler
+     handler: dist/<module>/handlers/api/<name>.handler
      events:
        - httpApi:
            path: /api/<resource>
