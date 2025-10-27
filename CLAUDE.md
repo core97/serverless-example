@@ -45,6 +45,7 @@ src/
 │   ├── infra/logger/                # Logger implementations (Pino)
 │   ├── presentation/
 │   │   ├── hono-api.ts              # Main Hono app orchestrator
+│   │   ├── lambda-handler-factory.ts # Factory for creating Lambda handlers
 │   │   └── types/                   # Shared types
 │   └── shared.module.ts             # DI container configuration
 │
@@ -69,15 +70,25 @@ Each `*.api.ts` file in `src/*/presentation/api/` is a separate Lambda handler:
   - `src/book/presentation/api/author.api.ts` → Author handler
   - `src/shop/presentation/api/shop.api.ts` → Shop handler
 
-Each handler:
-- Uses InversifyJS to resolve dependencies from the DI container
-- Gets a specific router from the container
+**Handler Structure**:
+
+Handlers use the `createLambdaHandler` factory from `lambda-handler-factory.ts`:
+
+```typescript
+import { createLambdaHandler } from '@/shared/presentation/lambda-handler-factory';
+import { BookRouter } from '@/book/presentation/routers/book.router';
+
+export const handler = createLambdaHandler(BookRouter.name);
+```
+
+The factory:
+- Resolves dependencies from the InversifyJS DI container
+- Gets the specified router(s) from the container
 - Configures a Hono app with middleware (CORS, logging, context, error handling)
-- Exports an async Lambda handler function
-- Routes are defined directly in each router (e.g., BookRouter defines `/api/books`)
+- Uses lazy initialization to avoid top-level await (required for CommonJS compatibility)
+- Supports single router: `createLambdaHandler(RouterName)` or multiple routers: `createLambdaHandler([Router1, Router2])`
 
 **Important**:
-- Handlers use lazy initialization to avoid top-level await (required for CommonJS compatibility)
 - Each router defines its complete path including `/api` prefix (e.g., `/api/books`, `/api/authors`)
 
 ### Build System
@@ -102,9 +113,16 @@ Each handler:
 - Function config: 256MB memory, 30s timeout
 
 **Adding a new handler**:
-1. Create file: `src/<module>/presentation/api/<name>.api.ts`
-2. Run `npm run build` - tsup will automatically compile it to `dist/handlers/<module>-<name>.cjs`
-3. Add function to `serverless.yml`:
+1. Create your router in `src/<module>/presentation/routers/<name>.router.ts` and register it in the DI container
+2. Create file: `src/<module>/presentation/api/<name>.api.ts`:
+   ```typescript
+   import { createLambdaHandler } from '@/shared/presentation/lambda-handler-factory';
+   import { YourRouter } from '@/<module>/presentation/routers/your.router';
+
+   export const handler = createLambdaHandler(YourRouter.name);
+   ```
+3. Run `npm run build` - tsup will automatically compile it to `dist/handlers/<module>-<name>.cjs`
+4. Add function to `serverless.yml`:
    ```yaml
    <module><Name>Handler:
      handler: dist/handlers/<module>-<name>.handler
