@@ -20,7 +20,6 @@ This is a serverless API backend built with Hono framework, deployed to AWS Lamb
   - Example routes:
     - `http://localhost:3000/api/books` - Get all books (BookRouter)
     - `http://localhost:3000/api/authors` - Author endpoints (AuthorRouter)
-    - `http://localhost:3000/api/shops` - Shop endpoints (ShopRouter)
   - Route structure: `/api/{resource-path}`
     - Stage prefix is disabled in local development via `noPrependStageInUrl: true`
     - API path: defined in each router's route definitions
@@ -48,7 +47,7 @@ src/
 │   │   └── types/                   # Shared types
 │   └── shared.module.ts             # DI container configuration
 │
-├── <module>/                        # Domain module (e.g., book, shop)
+├── <module>/                        # Domain module (e.g., book, author)
 │   ├── presentation/
 │   │   ├── api/
 │   │   │   └── *.api.ts             # Lambda handler entry points
@@ -66,8 +65,7 @@ Each `*.api.ts` file in `src/*/presentation/api/` is a separate Lambda handler:
 - **Pattern**: `src/<module>/presentation/api/<handler>.api.ts`
 - **Examples**:
   - `src/book/presentation/api/book.api.ts` → Book handler
-  - `src/book/presentation/api/author.api.ts` → Author handler
-  - `src/shop/presentation/api/shop.api.ts` → Shop handler
+  - `src/author/presentation/api/author.api.ts` → Author handler
 
 **Handler Structure**:
 
@@ -99,7 +97,7 @@ The factory:
 - **Output pattern**: `dist/handlers/<module>-<handler>.cjs` (minified, with sourcemaps)
 - **Examples**:
   - `src/book/presentation/api/book.api.ts` → `dist/handlers/book-book.cjs`
-  - `src/shop/presentation/api/shop.api.ts` → `dist/handlers/shop-shop.cjs`
+  - `src/author/presentation/api/author.api.ts` → `dist/handlers/author-author.cjs`
 - TypeScript paths: `@/*` → `src/*`, `lib/*` → `lib/*`
 - Format: CJS for compatibility with serverless-offline and AWS Lambda
 
@@ -110,7 +108,7 @@ The factory:
 - **API Gateway HTTP API (v2)**: Modern, faster, and more cost-effective than REST API
   - CORS configured globally in provider settings
   - Payload format version 2.0
-  - Each handler gets its own route (e.g., `/api/books`, `/api/authors`, `/api/shops`)
+  - Each handler gets its own route (e.g., `/api/books`, `/api/authors`)
 - Default stage: `dev` (override with `--stage` flag)
 - Function config: 256MB memory, 30s timeout
 - **AWS URLs**: Include stage prefix (e.g., `https://xxx.execute-api.eu-west-3.amazonaws.com/dev/api/books`)

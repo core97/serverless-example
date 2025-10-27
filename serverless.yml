@@ -6,7 +6,7 @@ provider:
   region: eu-west-3
   stage: ${opt:stage, 'dev'}
   memorySize: 256
-  timeout: 30
+  timeout: 29  # Set below API Gateway's 30s limit to prevent timeout issues
   httpApi:
     cors: true
     payload: '2.0'
@@ -33,28 +33,16 @@ functions:
           path: /api/books/{proxy+}
           method: '*'
 
-  # Author module handlers
-  # Generated from: src/book/presentation/api/author.api.ts -> dist/handlers/book-author.cjs
-  authorHandler:
-    handler: dist/handlers/book-author.handler
+  # Shop module handlers
+  # Generated from: src/shop/presentation/api/shop.api.ts -> dist/handlers/shop-shop.cjs
+  shopHandler:
+    handler: dist/handlers/author-author.handler
     events:
       - httpApi:
           path: /api/authors
           method: '*'
       - httpApi:
           path: /api/authors/{proxy+}
-          method: '*'
-
-  # Shop module handlers
-  # Generated from: src/shop/presentation/api/shop.api.ts -> dist/handlers/shop-shop.cjs
-  shopHandler:
-    handler: dist/handlers/shop-shop.handler
-    events:
-      - httpApi:
-          path: /api/shops
-          method: '*'
-      - httpApi:
-          path: /api/shops/{proxy+}
           method: '*'
 
   # To add a new handler:
