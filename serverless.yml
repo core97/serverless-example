@@ -7,6 +7,9 @@ provider:
   stage: ${opt:stage, 'dev'}
   memorySize: 256
   timeout: 30
+  httpApi:
+    cors: true
+    payload: '2.0'
   iam:
     role:
       statements:
@@ -23,47 +26,41 @@ functions:
   bookHandler:
     handler: dist/handlers/book-book.handler
     events:
-      - http:
+      - httpApi:
           path: /api/books
-          method: ANY
-          cors: true
-      - http:
+          method: '*'
+      - httpApi:
           path: /api/books/{proxy+}
-          method: ANY
-          cors: true
+          method: '*'
 
   # Author module handlers
   # Generated from: src/book/presentation/api/author.api.ts -> dist/handlers/book-author.cjs
   authorHandler:
     handler: dist/handlers/book-author.handler
     events:
-      - http:
+      - httpApi:
           path: /api/authors
-          method: ANY
-          cors: true
-      - http:
+          method: '*'
+      - httpApi:
           path: /api/authors/{proxy+}
-          method: ANY
-          cors: true
+          method: '*'
 
   # Shop module handlers
   # Generated from: src/shop/presentation/api/shop.api.ts -> dist/handlers/shop-shop.cjs
   shopHandler:
     handler: dist/handlers/shop-shop.handler
     events:
-      - http:
+      - httpApi:
           path: /api/shops
-          method: ANY
-          cors: true
-      - http:
+          method: '*'
+      - httpApi:
           path: /api/shops/{proxy+}
-          method: ANY
-          cors: true
+          method: '*'
 
   # To add a new handler:
   # 1. Create a new file: src/<module>/presentation/api/<name>.api.ts
   # 2. tsup will automatically compile it to: dist/handlers/<module>-<name>.cjs
-  # 3. Add a new function here with the pattern above
+  # 3. Add a new function here with the httpApi event pattern above
 
 plugins:
   - serverless-offline
@@ -71,3 +68,4 @@ plugins:
 custom:
   serverless-offline:
     httpPort: 3000
+    noPrependStageInUrl: true

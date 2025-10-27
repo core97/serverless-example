@@ -18,13 +18,12 @@ This is a serverless API backend built with Hono framework, deployed to AWS Lamb
 - `npm run dev` - Run serverless-offline (starts local API server on http://localhost:3000)
   - Each handler has its own Lambda function and routes
   - Example routes:
-    - `http://localhost:3000/dev/book/api/books` - Get all books (BookRouter)
-    - `http://localhost:3000/dev/author/api/...` - Author endpoints (AuthorRouter)
-    - `http://localhost:3000/dev/shop/api/...` - Shop endpoints (ShopRouter)
-  - Route structure: `/{stage}/{handler-name}/api/{resource-path}`
-    - Stage: `dev` (from serverless config)
-    - Handler name: matches the file name (e.g., `book` from `book.api.ts`)
-    - API path: defined in each router's `basePath` and route definitions
+    - `http://localhost:3000/api/books` - Get all books (BookRouter)
+    - `http://localhost:3000/api/authors` - Author endpoints (AuthorRouter)
+    - `http://localhost:3000/api/shops` - Shop endpoints (ShopRouter)
+  - Route structure: `/api/{resource-path}`
+    - Stage prefix is disabled in local development via `noPrependStageInUrl: true`
+    - API path: defined in each router's route definitions
 - `npm start` - Run the built application directly with Node.js (not recommended for this multi-handler setup)
 
 ### Code Quality
@@ -108,9 +107,14 @@ The factory:
 
 - **Multiple Lambda functions**: Each `*.api.ts` file becomes a separate Lambda function
 - Runtime: Node.js 20.x
-- API Gateway: Each handler gets its own route (e.g., `/book`, `/author`, `/shop`)
+- **API Gateway HTTP API (v2)**: Modern, faster, and more cost-effective than REST API
+  - CORS configured globally in provider settings
+  - Payload format version 2.0
+  - Each handler gets its own route (e.g., `/api/books`, `/api/authors`, `/api/shops`)
 - Default stage: `dev` (override with `--stage` flag)
 - Function config: 256MB memory, 30s timeout
+- **AWS URLs**: Include stage prefix (e.g., `https://xxx.execute-api.eu-west-3.amazonaws.com/dev/api/books`)
+  - To remove stage prefix in production, configure a Custom Domain (requires Route53 domain)
 
 **Adding a new handler**:
 1. Create your router in `src/<module>/presentation/routers/<name>.router.ts` and register it in the DI container
@@ -127,14 +131,12 @@ The factory:
    <module><Name>Handler:
      handler: dist/handlers/<module>-<name>.handler
      events:
-       - http:
-           path: /<name>
-           method: ANY
-           cors: true
-       - http:
-           path: /<name/{proxy+}
-           method: ANY
-           cors: true
+       - httpApi:
+           path: /api/<resource>
+           method: '*'
+       - httpApi:
+           path: /api/<resource>/{proxy+}
+           method: '*'
    ```
 
 ### Dependency Injection (InversifyJS)
@@ -146,7 +148,9 @@ The factory:
 
 ### Configuration Notes
 - Environment variables loaded via dotenv (`.env` file)
-- CORS enabled globally
+- **API Gateway**: Uses HTTP API (v2) instead of REST API for better performance and lower cost
+- **CORS**: Enabled globally via `provider.httpApi.cors: true`
+- **Local URLs**: Stage prefix disabled via `noPrependStageInUrl: true` in serverless-offline config
 - Prettier configured: single quotes, 100 char width, arrow parens: avoid
 - ESLint: TypeScript strict mode, unused vars must be prefixed with `_`
 
