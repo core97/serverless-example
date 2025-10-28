@@ -41,8 +41,8 @@ functions:
           path: /api/authors/{proxy+}
           method: '*'
 
-  authorCreationCron:
-    handler: dist/author/functions/cron/author-creation.handler
+  authorsListCron:
+    handler: dist/author/functions/cron/authors-list.handler
     events:
       - schedule:
           rate: rate(1 minute)

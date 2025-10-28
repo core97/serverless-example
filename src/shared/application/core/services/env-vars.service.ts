@@ -4,6 +4,7 @@ import { z } from 'zod';
 @injectable()
 export class EnvVarsService {
   private static schema = z.object({
+    DATABASE_URL: z.url(),
     NODE_ENV: z.enum(['development', 'production']),
   });
 

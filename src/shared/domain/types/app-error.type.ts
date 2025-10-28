@@ -59,4 +59,5 @@ export class AppError extends Error {
 
 export const PREFIX_ERRORS = {
   AUTHOR: '1',
+  BOOK: '2',
 };
