@@ -101,15 +101,23 @@ The factory:
 
 **tsup** automatically discovers and compiles all `*.http.ts` files:
 
-- **Auto-discovery**: Uses `glob` to find all files matching `src/*/presentation/functions/http/*.http.ts`
+- **Auto-discovery**: Uses `glob` to find all files matching `src/*/presentation/functions/http/*.http.ts` and `src/*/presentation/functions/cron/*.cron.ts`
 - **Multiple entry points**: Each handler is compiled separately
-- **Output pattern**: `dist/<module>/functions/http/<handler>.cjs` (mirrors source structure, minified, with sourcemaps)
+- **Output pattern**: `dist/<module>/functions/<type>/<handler>.cjs` (mirrors source structure, minified, with sourcemaps)
 - **Examples**:
   - `src/book/presentation/functions/http/book.http.ts` → `dist/book/functions/http/book.cjs`
   - `src/author/presentation/functions/http/author.http.ts` → `dist/author/functions/http/author.cjs`
+  - `src/author/presentation/functions/cron/author-creation.cron.ts` → `dist/author/functions/cron/author-creation.cjs`
 - TypeScript paths: `@/*` → `src/*`, `lib/*` → `lib/*`
 - Format: CJS for compatibility with serverless-offline and AWS Lambda
-- Extensible: Additional globs can be added in `tsup.config.ts` for other function types (cron, step, etc.)
+- Extensible: Additional globs can be added in `tsup.config.ts` for other function types (step, etc.)
+
+**Source Maps Configuration**:
+- External sourcemaps (`.cjs.map` files) are generated for all bundles
+- `source-map-support` is automatically loaded in all handlers via `lambda-handler-factory.ts`
+- Error stack traces show original TypeScript source locations with correct line numbers
+- Bundle size remains small (~48KB) as sourcemaps are in separate files
+- Sourcemaps work in both local development and AWS Lambda
 
 ### Deployment
 
@@ -159,12 +167,17 @@ The factory:
 - **Modules**: Each domain has its own module (e.g., `book.module.ts`) that registers dependencies
 - **Services**: Shared services (Logger, Context, EnvVars) registered in `shared.module.ts`
 - **Usage**: Handlers resolve routers and services from the container using `container.get<T>(name)`
+- **Important**: Use **constructor injection** (not property injection) in abstract classes to ensure proper dependency resolution with InversifyJS
+  - Abstract classes like `CronJob` should inject dependencies via constructor parameters
+  - Concrete implementations must call `super()` with the required dependencies
+  - This ensures InversifyJS can properly resolve and inject all dependencies
 
 ### Configuration Notes
 - Environment variables loaded via dotenv (`.env` file)
 - **API Gateway**: Uses HTTP API (v2) instead of REST API for better performance and lower cost
 - **CORS**: Enabled globally via `provider.httpApi.cors: true`
 - **Local URLs**: Stage prefix disabled via `noPrependStageInUrl: true` in serverless-offline config
+- **Decorator Metadata**: Requires `@swc/core` to emit decorator metadata for InversifyJS dependency injection
 - Prettier configured: single quotes, 100 char width, arrow parens: avoid
 - ESLint: TypeScript strict mode, unused vars must be prefixed with `_`
 

@@ -1,4 +1,4 @@
-import { createLambdaHandler } from '@/shared/presentation/lambda-handler-factory';
+import { createHttpHandler } from '@/shared/presentation/lambda-handler-factory';
 import { AuthorRouter } from '@/author/presentation/routers/author.router';
 
-export const handler = createLambdaHandler(AuthorRouter.name);
+export const handler = createHttpHandler(AuthorRouter.name);

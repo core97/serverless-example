@@ -5,7 +5,7 @@ import { SharedModule } from '@/shared/shared.module';
 
 /**
  * TODO:
- * - Añadir un cron job de ejemplo
+ * - Añadir un cron job de ejemplo y el error AppError
  * 
  * - Conectar a una base de datos usando Prisma
  * 

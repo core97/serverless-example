@@ -3,6 +3,9 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 
 type ContextStore = {
+  cron?: {
+    name: string;
+  };
   request?: {
     method: string;
     url: string;

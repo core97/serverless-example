@@ -41,10 +41,22 @@ functions:
           path: /api/authors/{proxy+}
           method: '*'
 
+  authorCreationCron:
+    handler: dist/author/functions/cron/author-creation.handler
+    events:
+      - schedule:
+          rate: rate(1 minute)
+          enabled: true
+
   # To add a new HTTP handler:
   # 1. Create a new file: src/<module>/presentation/functions/http/<name>.http.ts
   # 2. tsup will automatically compile it to: dist/<module>/functions/http/<name>.cjs
   # 3. Add a new function here with the httpApi event pattern above
+
+  # To add a new cron handler:
+  # 1. Create a new file: src/<module>/presentation/functions/cron/<name>.cron.ts
+  # 2. tsup will automatically compile it to: dist/<module>/functions/cron/<name>.cjs
+  # 3. Add a new function here with the schedule event pattern above
 
 plugins:
   - serverless-offline
