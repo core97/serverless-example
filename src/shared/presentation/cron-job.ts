@@ -29,17 +29,22 @@ export abstract class CronJob {
 
     await this.contextService.initializeStore(async () => {
       const startTime = Date.now();
+      let durationMs = -1;
 
       try {
+        this.logger.info(`-> Starting ${this.cronName} cron job`);
+
         await this.start();
         await this.run();
+        await this.finish();
 
-        const duration = Date.now() - startTime;
-        await this.finish(duration);
-
-        this.logger.info(`Finished cron job: ${this.cronName}`);
+        durationMs = Date.now() - startTime;
       } catch (error) {
+        this.logger.error(error, `Error in cron job ${this.cronName}:`);
+
         await this.handleError(error);
+      } finally {
+        this.logger.info(`<- Finishing ${this.cronName} cron job (${durationMs}ms)`);
       }
     }, store);
   }
@@ -48,17 +53,14 @@ export abstract class CronJob {
   protected abstract run(): Promise<void>;
 
   private async start(): Promise<void> {
-    this.logger.info(`-> Starting ${this.cronName} cron job`);
     // TODO: registrar en base de datos
   }
 
-  private async finish(durationMs: number): Promise<void> {
-    this.logger.info(`<- Finishing ${this.cronName} cron job (${durationMs}ms)`);
+  private async finish(): Promise<void> {
     // TODO: registrar en base de datos
   }
 
   protected async handleError(error: unknown): Promise<void> {
-    this.logger.error(error, `Error in cron job ${this.cronName}:`);
     // TODO: registrar en base de datos
   }
 }

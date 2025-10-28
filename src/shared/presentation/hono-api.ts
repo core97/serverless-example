@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { HonoRouter, HonoEnv } from '@/shared/presentation/types/hono-api.type';
 import { LoggerService } from '@/shared/application/core/services/logger.service';
 import { ContextService } from '@/shared/application/core/services/context.service';
+import { AppError } from '@/shared/domain/types/app-error.type';
 
 @injectable()
 export class HonoApi {
@@ -42,16 +43,13 @@ export class HonoApi {
 
   private handleGlobalError(app: Hono<HonoEnv>) {
     app.onError((err, c) => {
+      const [req, res] = [c.req.raw, c.res];
+
       this.logger.error(err);
 
-      return c.json(
-        {
-          code: '000',
-          message: 'Uncontrolled unexpected error',
-          name: 'UnknownError',
-        },
-        500,
-      );
+      return err instanceof AppError
+        ? err.getResponse(req, res)
+        : AppError.getDefaultResponse(req, res);
     });
   }
 
