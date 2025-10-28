@@ -5,32 +5,41 @@ import { HonoRouter, HonoEnv } from '@/shared/presentation/types/hono-api.type';
 import { LoggerService } from '@/shared/application/core/services/logger.service';
 import { ContextService } from '@/shared/application/core/services/context.service';
 import { AppError } from '@/shared/domain/types/app-error.type';
+import { PrismaDb } from '@/shared/infra/database/prisma-database';
 
 @injectable()
 export class HonoApi {
   constructor(
     @inject(LoggerService.name) private readonly logger: LoggerService,
     @inject(ContextService.name) private readonly contextService: ContextService,
+    @inject(PrismaDb.name) private readonly prismaDb: PrismaDb,
   ) {}
 
-  run(router: HonoRouter | HonoRouter[]): Promise<Hono<HonoEnv>> {
-    const routers = Array.isArray(router) ? router : [router];
+  async run(router: HonoRouter | HonoRouter[]): Promise<Hono<HonoEnv>> {
+    try {
+      const routers = Array.isArray(router) ? router : [router];
 
-    const app = new Hono<HonoEnv>();
+      await this.prismaDb.connect();
 
-    this.initalizeContext(app);
+      const app = new Hono<HonoEnv>();
 
-    this.handleGlobalError(app);
+      this.initalizeContext(app);
 
-    this.showRequest(app);
+      this.handleGlobalError(app);
 
-    app.use('*', cors());
+      this.showRequest(app);
 
-    this.attachRouters(routers, app);
+      app.use('*', cors());
 
-    this.showRoutes(app);
+      this.attachRouters(routers, app);
 
-    return Promise.resolve(app);
+      this.showRoutes(app);
+
+      return app;
+    } catch (error) {
+      await this.prismaDb.disconnect();
+      throw error;
+    }
   }
 
   private attachRouters(routers: HonoRouter[], rootApp: Hono<HonoEnv>) {

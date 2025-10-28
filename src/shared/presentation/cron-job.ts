@@ -1,6 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { LoggerService } from '@/shared/application/core/services/logger.service';
 import { ContextService } from '@/shared/application/core/services/context.service';
+import { PrismaDb } from '@/shared/infra/database/prisma-database';
 
 @injectable()
 export abstract class CronJob {
@@ -11,12 +12,16 @@ export abstract class CronJob {
 
   protected readonly contextService: ContextService;
 
+  protected readonly prismaDb: PrismaDb;
+
   constructor(
     @inject(LoggerService.name) logger: LoggerService,
     @inject(ContextService.name) contextService: ContextService,
+    @inject(PrismaDb.name) prismaDb: PrismaDb,
   ) {
     this.logger = logger;
     this.contextService = contextService;
+    this.prismaDb = prismaDb;
   }
 
   async execute(): Promise<void> {
@@ -34,6 +39,8 @@ export abstract class CronJob {
       try {
         this.logger.info(`-> Starting ${this.cronName} cron job`);
 
+        await this.prismaDb.connect();
+
         await this.start();
         await this.run();
         await this.finish();
@@ -45,6 +52,7 @@ export abstract class CronJob {
         await this.handleError(error);
       } finally {
         this.logger.info(`<- Finishing ${this.cronName} cron job (${durationMs}ms)`);
+        await this.prismaDb.disconnect();
       }
     }, store);
   }

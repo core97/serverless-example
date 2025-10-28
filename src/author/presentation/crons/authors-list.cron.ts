@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import { CronJob } from '@/shared/presentation/cron-job';
 import { LoggerService } from '@/shared/application/core/services/logger.service';
 import { ContextService } from '@/shared/application/core/services/context.service';
+import { PrismaDb } from '@/shared/infra/database/prisma-database';
 import { AuthorRepo } from '@/author/domain/repositories/author.repository';
 
 @injectable()
@@ -11,9 +12,10 @@ export class AuthorsListCron extends CronJob {
   constructor(
     @inject(LoggerService.name) logger: LoggerService,
     @inject(ContextService.name) contextService: ContextService,
+    @inject(PrismaDb.name) prismaDb: PrismaDb,
     @inject(AuthorRepo.name) private readonly authorRepo: AuthorRepo,
   ) {
-    super(logger, contextService);
+    super(logger, contextService, prismaDb);
   }
 
   protected async run(): Promise<void> {
