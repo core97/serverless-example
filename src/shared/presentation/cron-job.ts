@@ -2,7 +2,7 @@ import { injectable } from 'inversify';
 import { container } from '@/inversify.config';
 import { LoggerService } from '@/shared/application/core/services/logger.service';
 import { ContextService } from '@/shared/application/core/services/context.service';
-import { PrismaDb } from '@/shared/infra/database/prisma-database';
+import { EnvVarsService } from '@/shared/application/core/services/env-vars.service';
 
 @injectable()
 export abstract class CronJob {
@@ -12,7 +12,6 @@ export abstract class CronJob {
   // Lazy-loaded dependencies from container
   private _logger?: LoggerService;
   private _contextService?: ContextService;
-  private _prismaDb?: PrismaDb;
 
   protected get logger(): LoggerService {
     if (!this._logger) {
@@ -26,13 +25,6 @@ export abstract class CronJob {
       this._contextService = container.get<ContextService>(ContextService.name);
     }
     return this._contextService;
-  }
-
-  protected get prismaDb(): PrismaDb {
-    if (!this._prismaDb) {
-      this._prismaDb = container.get<PrismaDb>(PrismaDb.name);
-    }
-    return this._prismaDb;
   }
 
   async execute(): Promise<void> {
@@ -50,7 +42,7 @@ export abstract class CronJob {
       try {
         this.logger.info(`-> Starting ${this.cronName} cron job`);
 
-        await this.prismaDb.connect();
+        EnvVarsService.validateEnvVars();
 
         await this.start();
         await this.run();
@@ -63,7 +55,6 @@ export abstract class CronJob {
         await this.handleError(error);
       } finally {
         this.logger.info(`<- Finishing ${this.cronName} cron job (${durationMs}ms)`);
-        await this.prismaDb.disconnect();
       }
     }, store);
   }

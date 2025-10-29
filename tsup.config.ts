@@ -33,6 +33,9 @@ export default defineConfig(options => ({
   esbuildPlugins: [
     esbuildPluginTsc({ tsconfigPath: resolve(process.cwd(), 'tsconfig.json') }),
   ],
+  external: [
+    '@prisma/client', // Prisma needs native binaries and generated client at runtime
+  ],
   format: ['cjs'],
   keepNames: true,
   minify: true,

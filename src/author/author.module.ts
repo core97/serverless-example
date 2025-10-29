@@ -1,12 +1,13 @@
 import { ContainerModule } from 'inversify';
 import { AuthorRepo } from '@/author/domain/repositories/author.repository';
-import { PrismaAuthorRepo } from '@/author/infra/prisma-author.repository';
+// import { PrismaAuthorRepo } from '@/author/infra/prisma-author.repository';
+import { MemoryAuthorRepo } from '@/author/infra/memory-author.repository';
 import { AuthorCreation } from '@/author/application/author-creation.use-case';
 import { AuthorRouter } from '@/author/presentation/routers/author.router';
 import { AuthorsListCron } from '@/author/presentation/crons/authors-list.cron';
 
 export const AuthorModule = new ContainerModule(({ bind }) => {
-  bind<AuthorRepo>(AuthorRepo.name).to(PrismaAuthorRepo).inSingletonScope();
+  bind<AuthorRepo>(AuthorRepo.name).to(MemoryAuthorRepo).inSingletonScope();
 
   bind<AuthorCreation>(AuthorCreation.name).to(AuthorCreation).inSingletonScope();
 
