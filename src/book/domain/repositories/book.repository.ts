@@ -14,6 +14,6 @@ export abstract class BookRepo {
 
   abstract updateOneById: (
     id: Book['id'],
-    params: Partial<Pick<Book, 'authorId' | 'title'>>,
+    params: Partial<Pick<Book, 'authorId' | 'isPublished' | 'title'>>,
   ) => Promise<Book>;
 }

@@ -6,6 +6,10 @@ export const BooksListGet = z
   .extend(PaginationParamsSchema.shape)
   .partial();
 
-export const BookPost = z.object({ title: z.string().nonempty(), authorId: z.uuid() });
+export const BookPost = z.object({
+  title: z.string().nonempty(),
+  isPulished: z.boolean().optional().default(false),
+  authorId: z.uuid(),
+});
 
 export const BookPatch = BookPost.partial();

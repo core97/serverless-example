@@ -16,10 +16,11 @@ model Author {
 }
 
 model Book {
-  id        String   @id @default(uuid()) @db.Uuid
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String
-  author    Author   @relation(fields: [authorId], references: [id])
-  authorId  String   @unique @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  author      Author   @relation(fields: [authorId], references: [id])
+  authorId    String   @unique @db.Uuid
+  isPublished Boolean
+  title       String
 }

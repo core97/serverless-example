@@ -6,6 +6,9 @@ type ContextStore = {
   cron?: {
     name: string;
   };
+  event?: {
+    name: string;
+  };
   request?: {
     method: string;
     url: string;

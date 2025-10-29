@@ -46,7 +46,13 @@ export class BookRouter extends HonoRouter {
       const bookId = c.req.param('bookId');
       const data = c.req.valid('json');
 
+      const previousBook = await this.bookRepo.findOneById(bookId);
+
       const book = await this.bookRepo.updateOneById(bookId, data);
+
+      if (previousBook?.isPublished === false && book.isPublished) {
+        // TODO: llamar el evento pasando como parámetro el libro publicado
+      }
 
       return c.json(book);
     });
@@ -54,7 +60,15 @@ export class BookRouter extends HonoRouter {
     app.post('/', zValidator('json', BookPost), async c => {
       const data = c.req.valid('json');
 
-      const book = new Book({ authorId: data.authorId, title: data.title });
+      const book = new Book({
+        authorId: data.authorId,
+        isPublished: data.isPulished,
+        title: data.title,
+      });
+
+      if (book.isPublished) {
+        // TODO: llamar el evento pasando como parámetro el libro publicado
+      }
 
       await this.bookRepo.create(book);
 
