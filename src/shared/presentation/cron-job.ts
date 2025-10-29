@@ -1,4 +1,5 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
+import { container } from '@/inversify.config';
 import { LoggerService } from '@/shared/application/core/services/logger.service';
 import { ContextService } from '@/shared/application/core/services/context.service';
 import { PrismaDb } from '@/shared/infra/database/prisma-database';
@@ -8,20 +9,30 @@ export abstract class CronJob {
   // Must be defined by the concrete cron job
   protected abstract readonly cronName: string;
 
-  protected readonly logger: LoggerService;
+  // Lazy-loaded dependencies from container
+  private _logger?: LoggerService;
+  private _contextService?: ContextService;
+  private _prismaDb?: PrismaDb;
 
-  protected readonly contextService: ContextService;
+  protected get logger(): LoggerService {
+    if (!this._logger) {
+      this._logger = container.get<LoggerService>(LoggerService.name);
+    }
+    return this._logger;
+  }
 
-  protected readonly prismaDb: PrismaDb;
+  protected get contextService(): ContextService {
+    if (!this._contextService) {
+      this._contextService = container.get<ContextService>(ContextService.name);
+    }
+    return this._contextService;
+  }
 
-  constructor(
-    @inject(LoggerService.name) logger: LoggerService,
-    @inject(ContextService.name) contextService: ContextService,
-    @inject(PrismaDb.name) prismaDb: PrismaDb,
-  ) {
-    this.logger = logger;
-    this.contextService = contextService;
-    this.prismaDb = prismaDb;
+  protected get prismaDb(): PrismaDb {
+    if (!this._prismaDb) {
+      this._prismaDb = container.get<PrismaDb>(PrismaDb.name);
+    }
+    return this._prismaDb;
   }
 
   async execute(): Promise<void> {

@@ -438,11 +438,10 @@ The factory:
 
    @injectable()
    export class YourCronJob extends CronJob {
-     constructor(
-       @inject(LoggerService.name) logger: LoggerService,
-       @inject(YourUseCase.name) private useCase: YourUseCase,
-     ) {
-       super(logger);
+     protected readonly cronName = 'YourCronJob';
+
+     constructor(@inject(YourUseCase.name) private readonly useCase: YourUseCase) {
+       super();
      }
 
      protected async run(): Promise<void> {
@@ -450,6 +449,7 @@ The factory:
      }
    }
    ```
+   **Note**: The `CronJob` base class uses property injection for common dependencies (logger, contextService, prismaDb), so you only need to inject your cron's specific dependencies.
 2. Create handler in `src/<module>/presentation/functions/cron/<name>.cron.ts`:
    ```typescript
    import { container } from '@/inversify.config';
@@ -468,10 +468,29 @@ The factory:
 - **Modules**: Each domain has its own module (e.g., `book.module.ts`) that registers dependencies
 - **Services**: Shared services (Logger, Context, EnvVars) registered in `shared.module.ts`
 - **Usage**: Handlers resolve routers and services from the container using `container.get<T>(name)`
-- **Important**: Use **constructor injection** (not property injection) in abstract classes to ensure proper dependency resolution with InversifyJS
-  - Abstract classes like `CronJob` should inject dependencies via constructor parameters
-  - Concrete implementations must call `super()` with the required dependencies
-  - This ensures InversifyJS can properly resolve and inject all dependencies
+- **Injection patterns**:
+  - **Lazy-loaded getters**: Used in abstract base classes (like `CronJob`) for shared dependencies
+    - Allows derived classes to only inject their specific dependencies without repeating base dependencies
+    - Dependencies are resolved from the container on-demand when first accessed
+    - Survives bundling/minification (unlike `@lazyInject` from `inversify-inject-decorators`)
+    - Example:
+      ```typescript
+      private _logger?: LoggerService;
+      protected get logger(): LoggerService {
+        if (!this._logger) {
+          this._logger = container.get<LoggerService>(LoggerService.name);
+        }
+        return this._logger;
+      }
+      ```
+  - **Constructor injection**: Used in concrete classes for their specific dependencies
+    - Dependencies are injected via constructor parameters
+    - Example: `constructor(@inject(YourUseCase.name) private useCase: YourUseCase)`
+
+  **Why lazy getters over other alternatives?**
+  - `LazyServiceIdentifier` from InversifyJS requires calling as a function: `this.logger().info()` (awkward API)
+  - `@lazyInject` from `inversify-inject-decorators` breaks during bundling/minification with tsup
+  - Lazy getters provide the best balance: clean API, robust, and compatible with all build tools
 
 ### Database (Prisma ORM)
 

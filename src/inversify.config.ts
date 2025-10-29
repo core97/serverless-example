@@ -5,12 +5,9 @@ import { SharedModule } from '@/shared/shared.module';
 
 /**
  * TODO:
- * - Conectar a una base de datos usando Prisma
- * 
+ * - Crear respositorios en memoria
  * - Crear un evento por EventBridge o SQS
- * 
  * - Crear una step function
- * 
  * - Crear un dashboard de gráficos en cloudwatch de los errores
  */
 
