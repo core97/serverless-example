@@ -21,7 +21,9 @@ export class MemoryAuthorRepo implements AuthorRepo {
 
     const index = mockAuthors.findIndex(author => author.id === authorId);
 
-    if (index !== -1) {
+    if (index === -1) {
+      throw new Error(`Author with id ${authorId} not found to update`);
+    } else {
       mockAuthors.splice(index, 1);
     }
   }

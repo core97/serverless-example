@@ -6,10 +6,16 @@ import { BookPatch, BookPost, BooksListGet } from '@/book/presentation/dtos/book
 import { BookRepo } from '@/book/domain/repositories/book.repository';
 import { Book } from '@/book/domain/entities/book.entity';
 import { BookError } from '@/book/domain/errors/book.error';
+import { EventPublisher } from '@/shared/application/core/services/event-publisher.service';
+import { LoggerService } from '@/shared/application/core/services/logger.service';
 
 @injectable()
 export class BookRouter extends HonoRouter {
-  constructor(@inject(BookRepo.name) private readonly bookRepo: BookRepo) {
+  constructor(
+    @inject(BookRepo.name) private readonly bookRepo: BookRepo,
+    @inject(EventPublisher.name) private readonly eventPublisher: EventPublisher,
+    @inject(LoggerService.name) private readonly logger: LoggerService,
+  ) {
     super({ basePath: '/api/books' });
   }
 
@@ -51,7 +57,13 @@ export class BookRouter extends HonoRouter {
       const book = await this.bookRepo.updateOneById(bookId, data);
 
       if (previousBook?.isPublished === false && book.isPublished) {
-        // TODO: llamar el evento pasando como parámetro el libro publicado
+        this.logger.info('Book publication detected, publishing event...');
+
+        await this.eventPublisher.publish({
+          source: 'custom.books',
+          detailType: 'BookPublished',
+          detail: { book },
+        });
       }
 
       return c.json(book);
@@ -62,15 +74,19 @@ export class BookRouter extends HonoRouter {
 
       const book = new Book({
         authorId: data.authorId,
-        isPublished: data.isPulished,
+        isPublished: data.isPublished,
         title: data.title,
       });
 
-      if (book.isPublished) {
-        // TODO: llamar el evento pasando como parámetro el libro publicado
-      }
-
       await this.bookRepo.create(book);
+
+      if (book.isPublished) {
+        await this.eventPublisher.publish({
+          source: 'custom.books',
+          detailType: 'BookPublished',
+          detail: { book },
+        });
+      }
 
       return c.json({ book }, 201);
     });

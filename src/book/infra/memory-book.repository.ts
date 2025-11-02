@@ -20,14 +20,14 @@ export class MemoryBookRepo implements BookRepo {
 
     const index = mockBooks.findIndex(book => book.id === bookId);
 
-    if (index !== -1) {
+    if (index === -1) {
+      throw new Error(`Book with id ${bookId} not found to update`);
+    } else {
       mockBooks.splice(index, 1);
     }
   }
 
-  async findMany(
-    ...params: Parameters<BookRepo['findMany']>
-  ): ReturnType<BookRepo['findMany']> {
+  async findMany(...params: Parameters<BookRepo['findMany']>): ReturnType<BookRepo['findMany']> {
     const [{ title, authorId }] = params;
 
     const results = mockBooks.filter(el => {

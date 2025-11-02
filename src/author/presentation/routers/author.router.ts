@@ -41,6 +41,12 @@ export class AuthorRouter extends HonoRouter {
     app.delete('/:authorId', async c => {
       const authorId = c.req.param('authorId');
 
+      const author = await this.authorRepo.findOneByIdForDetails(authorId);
+
+      if (author?.books.length) {
+        throw new AuthorError.DeleteWithBooks('Cannot delete author with associated books.');
+      }
+
       await this.authorRepo.deleteOneById(authorId);
 
       return c.json({ authorId });

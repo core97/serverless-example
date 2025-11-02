@@ -26,6 +26,7 @@ export const mockBooks: Book[] = [
   new Book({
     id: '660e8400-e29b-41d4-a716-446655440001',
     authorId: '550e8400-e29b-41d4-a716-446655440001',
+    isPublished: false,
     title: 'Cien años de soledad',
     createdAt: new Date('2024-01-15T11:00:00Z'),
     updatedAt: new Date('2024-01-15T11:00:00Z'),
@@ -33,6 +34,7 @@ export const mockBooks: Book[] = [
   new Book({
     id: '660e8400-e29b-41d4-a716-446655440002',
     authorId: '550e8400-e29b-41d4-a716-446655440002',
+    isPublished: false,
     title: 'La casa de los espíritus',
     createdAt: new Date('2024-01-16T11:00:00Z'),
     updatedAt: new Date('2024-01-16T11:00:00Z'),
@@ -40,6 +42,7 @@ export const mockBooks: Book[] = [
   new Book({
     id: '660e8400-e29b-41d4-a716-446655440003',
     authorId: '550e8400-e29b-41d4-a716-446655440003',
+    isPublished: false,
     title: 'Ficciones',
     createdAt: new Date('2024-01-17T11:00:00Z'),
     updatedAt: new Date('2024-01-17T11:00:00Z'),

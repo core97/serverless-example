@@ -6,4 +6,10 @@ export namespace AuthorError {
       super(`${PREFIX_ERRORS.AUTHOR}-001`, message, { httpStatus: 404 });
     }
   }
+
+    export class DeleteWithBooks extends AppError {
+    constructor(message: string) {
+      super(`${PREFIX_ERRORS.AUTHOR}-002`, message, { httpStatus: 406 });
+    }
+  }
 }

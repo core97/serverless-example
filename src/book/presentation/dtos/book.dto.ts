@@ -8,7 +8,7 @@ export const BooksListGet = z
 
 export const BookPost = z.object({
   title: z.string().nonempty(),
-  isPulished: z.boolean().optional().default(false),
+  isPublished: z.boolean(),
   authorId: z.uuid(),
 });
 

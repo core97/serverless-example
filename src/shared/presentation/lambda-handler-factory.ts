@@ -5,6 +5,7 @@ import { handle } from 'hono/aws-lambda';
 import { HonoApi } from '@/shared/presentation/hono-api';
 import { HonoRouter } from '@/shared/presentation/types/hono-api.type';
 import { CronJob } from '@/shared/presentation/cron-job';
+import { Event } from '@/shared/presentation/event';
 import { container } from '@/inversify.config';
 
 export function createHttpHandler(routerName: string) {
@@ -39,5 +40,19 @@ export function createCronHandler(cronJobName: string) {
     }
 
     await cronJobInstance.execute();
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createEventHandler<Input = any>(eventName: string) {
+  let eventInstance: Event<Input> | null = null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return async (event: Input, _context: any) => {
+    if (!eventInstance) {
+      eventInstance = container.get<Event<Input>>(eventName);
+    }
+
+    await eventInstance.execute(event);
   };
 }

@@ -5,8 +5,13 @@ import { SharedModule } from '@/shared/shared.module';
 
 /**
  * TODO:
- * - Crear un evento por EventBridge o SQS
+ * - Crear un evento por EventBridge
+ *      + Hacer una constante con los nombres de los eventos
+ *      + Debugear a ver que recibe como parametro en el event
+ *        y chequear que reciba el parametro correcto
+ * 
  * - Crear una step function
+ * 
  * - Crear un dashboard de gráficos en cloudwatch de los errores
  */
 

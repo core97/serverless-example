@@ -19,6 +19,10 @@ provider:
             - logs:CreateLogStream
             - logs:PutLogEvents
           Resource: '*'
+        - Effect: Allow
+          Action:
+            - events:PutEvents
+          Resource: '*'
 
 package:
   individually: false
@@ -91,6 +95,16 @@ functions:
           rate: rate(1 minute)
           enabled: true
 
+  publishedBookEvent:
+    handler: dist/book/functions/event/published-book.handler
+    events:
+      - eventBridge:
+          pattern:
+            source:
+              - custom.books
+            detail-type:
+              - BookPublished
+
   # To add a new HTTP handler:
   # 1. Create a new file: src/<module>/presentation/functions/http/<name>.http.ts
   # 2. tsup will automatically compile it to: dist/<module>/functions/http/<name>.cjs
@@ -100,6 +114,11 @@ functions:
   # 1. Create a new file: src/<module>/presentation/functions/cron/<name>.cron.ts
   # 2. tsup will automatically compile it to: dist/<module>/functions/cron/<name>.cjs
   # 3. Add a new function here with the schedule event pattern above
+
+  # To add a new event handler:
+  # 1. Create a new file: src/<module>/presentation/functions/event/<name>.event.ts
+  # 2. tsup will automatically compile it to: dist/<module>/functions/event/<name>.cjs
+  # 3. Add a new function here with the eventBridge event pattern above
 
 plugins:
   - serverless-offline

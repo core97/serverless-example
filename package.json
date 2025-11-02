@@ -23,6 +23,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-eventbridge": "^3.919.0",
     "@hono/zod-validator": "^0.7.4",
     "@prisma/client": "^6.18.0",
     "dotenv": "17.2.3",

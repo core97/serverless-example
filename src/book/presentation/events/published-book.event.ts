@@ -13,10 +13,13 @@ export class PublishedBook extends Event<Input> {
     super();
   }
 
-  protected async run({ book }: Input) {
-    const author = await this.authorRepo.findOneById(book.authorId);
+  protected async run(input: Input) {
+    this.logger.info('Executing PublishedBook event');
+    this.logger.info(input);
 
-    this.logger.info(`${book.title} has been published!`);
+    const author = await this.authorRepo.findOneById(input?.book?.authorId);
+
+    this.logger.info(`${input?.book?.title} has been published!`);
     this.logger.info(`Thanks to the author ${author?.name}`);
   }
 }

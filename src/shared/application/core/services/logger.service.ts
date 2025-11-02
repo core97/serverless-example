@@ -3,6 +3,8 @@ import { ContextService } from '@/shared/application/core/services/context.servi
 export abstract class LoggerService {
   protected readonly MESSAGE_KEY = 'message';
 
+  protected readonly OBJECT_KEY = 'data';
+
   constructor(private readonly contextService: ContextService) {}
 
   abstract debug<T>(obj: T, msg?: string): void;
@@ -25,7 +27,7 @@ export abstract class LoggerService {
 
   normalizeLogData<T>(obj: T, msg?: string) {
     return {
-      ...(typeof obj === 'object' && obj),
+      ...(typeof obj === 'object' && { [this.OBJECT_KEY]: obj }),
       ...this.getMetadataFromStore(),
       [this.MESSAGE_KEY]: typeof obj === 'string' ? obj : msg,
     };
