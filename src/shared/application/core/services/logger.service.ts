@@ -16,11 +16,13 @@ export abstract class LoggerService {
   abstract warn<T>(obj: T, msg?: string): void;
 
   getMetadataFromStore() {
-    const httpStore = this.contextService.getStore();
-    const { request, traceId } = httpStore || {};
+    const store = this.contextService.getStore();
+    const { request, traceId, cron, event } = store || {};
 
     return {
       ...(request && { request }),
+      ...(cron && { cron }),
+      ...(event && { event }),
       ...(traceId && { traceId }),
     };
   }
@@ -37,7 +39,7 @@ export abstract class LoggerService {
 /**
  * How to find logs in CloudWatch:
  * - Go to CloudWatch -> Logs -> Log groups in AWS Console
- * - You can filters logs:
+ * - You can filter logs:
  *    + By level:
  *        * { $.level = "info" }
  *        * { $.level = "info" && $.request.method = "GET" }
@@ -46,4 +48,10 @@ export abstract class LoggerService {
  *   + By words included:
  *        * { $.message = "*check*" }
  *        * { $.request.url = "*\/api/health*" }
+ *   + By event name:
+ *        * { $.event.name = "PublishedBook" }
+ *        * { $.level = "error" && $.event.name = "PublishedBook" }
+ *   + By cron name:
+ *        * { $.cron.name = "AuthorsListCron" }
+ *        * { $.level = "error" && $.cron.name = "AuthorsListCron" }
  */
