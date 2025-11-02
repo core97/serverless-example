@@ -207,20 +207,21 @@ Each `*.http.ts` file in `src/*/presentation/functions/http/` is a separate HTTP
   - `src/author/presentation/functions/http/author.http.ts` → Author HTTP handler
 
 The `functions/` directory can contain subdirectories for different function types:
-- `http/` - API Gateway HTTP handlers
-- `cron/` - Scheduled functions (EventBridge)
-- `step/` - Step Functions handlers
+- `http/` - API Gateway HTTP handlers (use `createHttpHandler`)
+- `cron/` - Scheduled functions via EventBridge Scheduler (use `createCronHandler`)
+- `event/` - EventBridge event handlers (use `createEventHandler`)
+- `step/` - Step Functions handlers (to be implemented)
 - Custom types as needed
 
 **HTTP Handler Structure**:
 
-HTTP handlers use the `createLambdaHandler` factory from `lambda-handler-factory.ts`:
+HTTP handlers use the `createHttpHandler` factory from `lambda-handler-factory.ts`:
 
 ```typescript
-import { createLambdaHandler } from '@/shared/presentation/lambda-handler-factory';
+import { createHttpHandler } from '@/shared/presentation/lambda-handler-factory';
 import { BookRouter } from '@/book/presentation/routers/book.router';
 
-export const handler = createLambdaHandler(BookRouter.name);
+export const handler = createHttpHandler(BookRouter.name);
 ```
 
 The factory:
@@ -228,22 +229,26 @@ The factory:
 - Gets the specified router(s) from the container
 - Configures a Hono app with middleware (CORS, logging, context, error handling)
 - Uses lazy initialization to avoid top-level await (required for CommonJS compatibility)
-- Supports single router: `createLambdaHandler(RouterName)` or multiple routers: `createLambdaHandler([Router1, Router2])`
+- Supports single router: `createHttpHandler(RouterName)` or multiple routers: `createHttpHandler([Router1, Router2])`
 
 **Important**:
 - Each router defines its complete path including `/api` prefix (e.g., `/api/books`, `/api/authors`)
 
 ### Build System
 
-**tsup** automatically discovers and compiles all `*.http.ts` files:
+**tsup** automatically discovers and compiles all handler files:
 
-- **Auto-discovery**: Uses `glob` to find all files matching `src/*/presentation/functions/http/*.http.ts` and `src/*/presentation/functions/cron/*.cron.ts`
+- **Auto-discovery**: Uses `glob` to find all files matching:
+  - `src/*/presentation/functions/http/*.http.ts` (HTTP handlers)
+  - `src/*/presentation/functions/cron/*.cron.ts` (Cron handlers)
+  - `src/*/presentation/functions/event/*.event.ts` (EventBridge handlers)
 - **Multiple entry points**: Each handler is compiled separately
 - **Output pattern**: `dist/<module>/functions/<type>/<handler>.cjs` (mirrors source structure, minified, with sourcemaps)
 - **Examples**:
   - `src/book/presentation/functions/http/book.http.ts` → `dist/book/functions/http/book.cjs`
   - `src/author/presentation/functions/http/author.http.ts` → `dist/author/functions/http/author.cjs`
-  - `src/author/presentation/functions/cron/author-creation.cron.ts` → `dist/author/functions/cron/author-creation.cjs`
+  - `src/author/presentation/functions/cron/authors-list.cron.ts` → `dist/author/functions/cron/authors-list.cjs`
+  - `src/book/presentation/functions/event/published-book.event.ts` → `dist/book/functions/event/published-book.cjs`
 - TypeScript paths: `@/*` → `src/*`, `lib/*` → `lib/*`
 - Format: CJS for compatibility with serverless-offline and AWS Lambda
 - Extensible: Additional globs can be added in `tsup.config.ts` for other function types (step, etc.)
@@ -378,10 +383,10 @@ The factory:
    }
 
    // src/<module>/presentation/functions/http/<entity>.http.ts
-   import { createLambdaHandler } from '@/shared/presentation/lambda-handler-factory';
+   import { createHttpHandler } from '@/shared/presentation/lambda-handler-factory';
    import { YourEntityRouter } from '@/<module>/presentation/routers/<entity>.router';
 
-   export const handler = createLambdaHandler(YourEntityRouter.name);
+   export const handler = createHttpHandler(YourEntityRouter.name);
    ```
 
 5. **DI Container** - Register dependencies:
@@ -461,6 +466,133 @@ The factory:
    };
    ```
 3. Register in DI container and add to `serverless.yml` with schedule event
+
+**Adding EventBridge event handlers**:
+
+EventBridge is AWS's event bus service for building event-driven architectures. It allows you to publish custom events and have Lambda functions react to them.
+
+**Event Structure**: When EventBridge invokes a Lambda, it sends an event with this structure:
+```json
+{
+  "version": "0",
+  "id": "event-id",
+  "detail-type": "BookPublished",
+  "source": "custom.books",
+  "account": "123456789012",
+  "time": "2025-11-02T19:00:00Z",
+  "region": "eu-west-3",
+  "resources": [],
+  "detail": {
+    // Your actual payload is here
+    "book": { "id": "123", "title": "My Book" }
+  }
+}
+```
+
+**Important**: The `createEventHandler` factory automatically extracts the `detail` field, so your event handler receives only the payload.
+
+1. **Publishing events** - Use the `EventPublisher` service injected in your router or use case:
+   ```typescript
+   import { EventPublisher } from '@/shared/application/core/services/event-publisher.service';
+
+   @injectable()
+   export class BookRouter extends HonoRouter {
+     constructor(
+       @inject(EventPublisher.name) private readonly eventPublisher: EventPublisher
+     ) {
+       super({ basePath: '/api/books' });
+     }
+
+     async someMethod() {
+       // Publish event to EventBridge
+       await this.eventPublisher.publish({
+         source: 'custom.books',           // Custom source (use dot notation)
+         detailType: 'BookPublished',       // Event type
+         detail: { book: someBook }         // Your payload (will be in 'detail' field)
+       });
+     }
+   }
+   ```
+
+2. **Create event handler class** in `src/<module>/presentation/events/<name>.event.ts`:
+   ```typescript
+   import { injectable, inject } from 'inversify';
+   import { Event } from '@/shared/presentation/event';
+   import { YourUseCase } from '@/<module>/application/<usecase>.use-case';
+
+   type Input = { book: Book };  // Define your payload type
+
+   @injectable()
+   export class YourEvent extends Event<Input> {
+     protected eventName = 'YourEvent';
+
+     constructor(@inject(YourUseCase.name) private readonly useCase: YourUseCase) {
+       super();
+     }
+
+     protected async run(input: Input): Promise<void> {
+       // Your event handling logic
+       this.logger.info('Executing event handler');
+       await this.useCase.execute(input);
+     }
+   }
+   ```
+   **Note**: The `Event` base class uses lazy-loaded getters for common dependencies (logger, contextService), so you only need to inject your event's specific dependencies.
+
+3. **Create Lambda handler** in `src/<module>/presentation/functions/event/<name>.event.ts`:
+   ```typescript
+   import { createEventHandler } from '@/shared/presentation/lambda-handler-factory';
+   import { YourEvent } from '@/<module>/presentation/events/<name>.event';
+
+   type Input = { book: Book };  // Must match your event's Input type
+
+   export const handler = createEventHandler<Input>(YourEvent.name);
+   ```
+
+4. **Register in DI container** (`src/<module>/<module>.module.ts`):
+   ```typescript
+   bind<YourEvent>(YourEvent.name).to(YourEvent).inSingletonScope();
+   ```
+
+5. **Configure in `serverless.yml`**:
+   ```yaml
+   yourEventHandler:
+     handler: dist/<module>/functions/event/<name>.handler
+     events:
+       - eventBridge:
+           # eventBus: default  # Optional, defaults to 'default' event bus
+           pattern:
+             source:
+               - custom.books      # Must match the source you publish
+             detail-type:
+               - BookPublished     # Must match the detailType you publish
+   ```
+
+**Event Bus Configuration**:
+- By default, events are published to and consumed from the `default` event bus
+- The `eventBus` field in `serverless.yml` is optional when using `default`
+- For custom event buses, you must:
+  1. Create the event bus in `serverless.yml` resources
+  2. Specify `eventBus: my-custom-bus` in the function event configuration
+  3. Update `EventBusName` in `AwsEventBridgePublisher` service (can be made configurable via env var)
+
+**Debugging EventBridge events**:
+- Check CloudWatch logs for the **publisher Lambda** to verify the event was sent successfully
+  - Look for: "Publishing event to EventBridge: ..." and "Event published successfully"
+- Check CloudWatch logs for the **event handler Lambda** to verify it was triggered
+  - Look for: "Starting YourEvent event" and your custom logs
+- Use CloudWatch Insights to query across log groups:
+  ```
+  fields @timestamp, @message
+  | filter @message like /EventBridge/
+  | sort @timestamp desc
+  ```
+- Check EventBridge metrics in CloudWatch for `Invocations` and `FailedInvocations`
+
+**Common pitfalls**:
+- Event pattern in `serverless.yml` must exactly match the `source` and `detailType` you publish
+- The `detail` field contains your payload - the handler factory extracts it automatically
+- IAM permissions: The Lambda execution role needs `events:PutEvents` permission (already configured in provider.iam.role.statements)
 
 ### Dependency Injection (InversifyJS)
 
