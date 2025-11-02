@@ -48,11 +48,17 @@ export function createEventHandler<Input = any>(eventName: string) {
   let eventInstance: Event<Input> | null = null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return async (event: Input, _context: any) => {
+  return async (event: any, _context: any) => {
     if (!eventInstance) {
       eventInstance = container.get<Event<Input>>(eventName);
     }
 
-    await eventInstance.execute(event);
+    // Extract the 'detail' field from EventBridge event structure
+    // EventBridge sends events with this structure:
+    // { version, id, detail-type, source, account, time, region, resources, detail }
+    // The actual payload is in the 'detail' field
+    const payload = event.detail || event;
+
+    await eventInstance.execute(payload);
   };
 }
