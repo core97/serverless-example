@@ -2,6 +2,7 @@ import { injectable } from 'inversify';
 import { mockBooks } from 'data/mocks';
 import { BookRepo } from '@/book/domain/repositories/book.repository';
 import { Book } from '@/book/domain/entities/book.entity';
+import { BookError } from '@/book/domain/errors/book.error';
 
 @injectable()
 export class MemoryBookRepo implements BookRepo {
@@ -21,7 +22,7 @@ export class MemoryBookRepo implements BookRepo {
     const index = mockBooks.findIndex(book => book.id === bookId);
 
     if (index === -1) {
-      throw new Error(`Book with id ${bookId} not found to update`);
+      throw new BookError.NotFoundById(`Book with id ${bookId} not found to update`);
     } else {
       mockBooks.splice(index, 1);
     }
@@ -70,7 +71,7 @@ export class MemoryBookRepo implements BookRepo {
     const index = mockBooks.findIndex(book => book.id === id);
 
     if (index === -1) {
-      throw new Error(`Book with id ${id} not found to update`);
+      throw new BookError.NotFoundById(`Book with id ${id} not found to update`);
     }
 
     const updatedBook = new Book({

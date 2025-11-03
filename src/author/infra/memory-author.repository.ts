@@ -3,6 +3,7 @@ import { mockAuthors, mockBooks } from 'data/mocks';
 import { AuthorRepo } from '@/author/domain/repositories/author.repository';
 import { Author } from '@/author/domain/entities/author.entity';
 import { Book } from '@/book/domain/entities/book.entity';
+import { AuthorError } from '@/author/domain/errors/author.error';
 
 @injectable()
 export class MemoryAuthorRepo implements AuthorRepo {
@@ -22,7 +23,7 @@ export class MemoryAuthorRepo implements AuthorRepo {
     const index = mockAuthors.findIndex(author => author.id === authorId);
 
     if (index === -1) {
-      throw new Error(`Author with id ${authorId} not found to update`);
+      throw new AuthorError.NotFoundById(`Author with id ${authorId} not found to update`);
     } else {
       mockAuthors.splice(index, 1);
     }
@@ -83,7 +84,7 @@ export class MemoryAuthorRepo implements AuthorRepo {
     const index = mockAuthors.findIndex(author => author.id === id);
 
     if (index === -1) {
-      throw new Error(`Author with id ${id} not found to update`);
+      throw new AuthorError.NotFoundById(`Author with id ${id} not found to update`);
     }
 
     const updatedAuthor = new Author({

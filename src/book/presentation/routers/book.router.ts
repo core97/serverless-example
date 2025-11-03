@@ -43,6 +43,12 @@ export class BookRouter extends HonoRouter {
     app.delete('/:bookId', async c => {
       const bookId = c.req.param('bookId');
 
+      const book = await this.bookRepo.findOneById(bookId);
+
+      if (!book) {
+        throw new BookError.NotFoundById(`Book not found by id: ${bookId}`);
+      }
+
       await this.bookRepo.deleteOneById(bookId);
 
       return c.json({ bookId });
