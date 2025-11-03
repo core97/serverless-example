@@ -45,14 +45,17 @@ export class HonoApi {
   }
 
   private handleGlobalError(app: Hono<HonoEnv>) {
+    const { NODE_ENV } = EnvVarsService.getEnvVars();
+
     app.onError((err, c) => {
       const [req, res] = [c.req.raw, c.res];
+      const shouldSendErrorDetails = NODE_ENV !== 'production';
 
       this.logger.error(err);
 
       return err instanceof AppError
-        ? err.getResponse(req, res)
-        : AppError.getDefaultResponse(req, res);
+        ? err.getResponse(req, res, { shouldSendErrorDetails })
+        : AppError.getDefaultResponse(req, res, { shouldSendErrorDetails });
     });
   }
 

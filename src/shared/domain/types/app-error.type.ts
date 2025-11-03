@@ -15,11 +15,10 @@ export class AppError extends Error {
     this.httpStatus = options?.httpStatus ?? 500;
   }
 
-  getResponse(_req: Request, res: Response): Response {
+  getResponse(_req: Request, res: Response, opts?: { shouldSendErrorDetails?: boolean }): Response {
     const body = {
       code: this.code,
-      message: this.message,
-      name: this.name,
+      ...(opts?.shouldSendErrorDetails && { message: this.message, name: this.name }),
     };
 
     return new Response(JSON.stringify(body), {
@@ -31,11 +30,17 @@ export class AppError extends Error {
     });
   }
 
-  static getDefaultResponse(req: Request, res: Response) {
+  static getDefaultResponse(
+    req: Request,
+    res: Response,
+    opts?: { shouldSendErrorDetails?: boolean },
+  ) {
     const body = {
       code: '000',
-      message: 'Uncontrolled unexpected error',
-      name: 'UnknownError',
+      ...(opts?.shouldSendErrorDetails && {
+        message: 'Uncontrolled unexpected error',
+        name: 'UnknownError',
+      }),
     };
 
     return new Response(JSON.stringify(body), {
