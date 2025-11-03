@@ -1,6 +1,5 @@
 import { ContainerModule } from 'inversify';
 import { AuthorRepo } from '@/author/domain/repositories/author.repository';
-// import { PrismaAuthorRepo } from '@/author/infra/prisma-author.repository';
 import { MemoryAuthorRepo } from '@/author/infra/memory-author.repository';
 import { AuthorCreation } from '@/author/application/author-creation.use-case';
 import { AuthorRouter } from '@/author/presentation/routers/author.router';

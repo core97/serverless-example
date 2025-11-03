@@ -43,7 +43,11 @@ export class AuthorRouter extends HonoRouter {
 
       const author = await this.authorRepo.findOneByIdForDetails(authorId);
 
-      if (author?.books.length) {
+      if (!author) {
+        throw new AuthorError.NotFoundById(`Author not found by id: ${authorId}`);
+      }
+
+      if (author.books.length) {
         throw new AuthorError.DeleteWithBooks('Cannot delete author with associated books.');
       }
 
