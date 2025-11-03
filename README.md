@@ -311,10 +311,6 @@ npm run remove
 - Escribir tests para nuevas features
 - Seguir convenciones de ESLint y Prettier
 
-## 📄 Licencia
-
-Este proyecto está bajo la licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
-
 ## 📚 Recursos Adicionales
 
 - [CLAUDE.md](./CLAUDE.md) - Guía completa del proyecto para Claude Code
